@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reply Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0d0d0d;
+      --surface:  #141414;
+      --border:   #222222;
+      --accent:   #c8f060;
+      --muted:    #444444;
+      --text:     #e8e8e2;
+      --subtext:  #888880;
+      --danger:   #ff4d4d;
+      --mono:     'DM Mono', monospace;
+      --serif:    'Playfair Display', serif;
+      --sans:     'DM Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ─── Layout ─────────────────────────────────────────────── */
+    .shell {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ─── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .brand {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .brand span {
+      color: var(--accent);
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .account-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .account-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .account-handle {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .btn-remove:hover { color: var(--danger); }
+
+    .add-account {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 8px 12px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input:focus { border-color: var(--accent); }
+    .input::placeholder { color: var(--muted); }
+
+    .btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: #0d0d0d;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      padding: 8px 14px;
+      text-transform: uppercase;
+      transition: opacity 0.15s;
+      width: 100%;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--subtext);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 6px 12px;
+      text-transform: uppercase;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ─── Main ───────────────────────────────────────────────── */
+    .main {
+      padding: 40px 48px;
+    }
+
+    .main-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    .main-title {
+      font-family: var(--serif);
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .main-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ─── Draft Cards ─────────────────────────────────────────── */
+    .drafts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .draft-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      transition: border-color 0.2s;
+    }
+    .draft-card:hover { border-color: #333; }
+
+    .draft-post {
+      border-left: 2px solid var(--muted);
+      padding-left: 14px;
+    }
+
+    .draft-post-author {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .draft-post-text {
+      color: var(--subtext);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .draft-post-link {
+      display: inline-block;
+      margin-top: 6px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.15s;
+    }
+    .draft-post-link:hover { color: var(--accent); }
+
+    .draft-divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    .draft-reply-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .draft-textarea {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 12px 14px;
+      resize: vertical;
+      width: 100%;
+      min-height: 80px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .draft-textarea:focus { border-color: var(--accent); }
+
+    .draft-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-post {
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: #0d0d0d;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      padding: 9px 20px;
+      text-transform: uppercase;
+      transition: opacity 0.15s;
+    }
+    .btn-post:hover { opacity: 0.85; }
+    .btn-post:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .draft-timestamp {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* ─── States ─────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 80px 0;
+    }
+
+    .empty-state-title {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--subtext);
+      margin-bottom: 8px;
+    }
+
+    .empty-state-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 100;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--accent); color: var(--accent); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+
+    .status-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ─── Sidebar ─── -->
+  <aside class="sidebar">
+    <div class="brand">Reply<span>.</span></div>
+
+    <div>
+      <div class="section-label">Tracked Accounts</div>
+      <ul class="account-list" id="accountList">
+        <li style="font-family:var(--mono);font-size:11px;color:var(--muted);">Loading...</li>
+      </ul>
+    </div>
+
+    <div class="add-account">
+      <div class="section-label">Add Account</div>
+      <input class="input" id="usernameInput" type="text" placeholder="@username" />
+      <button class="btn" id="addAccountBtn" onclick="addAccount()">Track Account</button>
+    </div>
+
+    <div>
+      <div class="section-label">Controls</div>
+      <button class="btn-ghost" style="width:100%" onclick="triggerPoll()">Run Manual Poll</button>
+    </div>
+  </aside>
+
+  <!-- ─── Main ─── -->
+  <main class="main">
+    <div class="main-header">
+      <h1 class="main-title">Reply Queue</h1>
+      <div class="main-meta">
+        <span class="status-dot"></span>
+        <span id="draftCount">—</span> pending
+      </div>
+    </div>
+
+    <div class="drafts-list" id="draftsList"></div>
+  </main>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = "";
+
+  // ─── Toast ────────────────────────────────────────────────────────────────
+  function showToast(msg, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => { t.className = "toast"; }, 3000);
+  }
+
+  // ─── Accounts ─────────────────────────────────────────────────────────────
+  async function loadAccounts() {
+    const res = await fetch(`${API}/api/accounts`);
+    const accounts = await res.json();
+    const list = document.getElementById("accountList");
+    if (accounts.length === 0) {
+      list.innerHTML = `<li style="font-family:var(--mono);font-size:11px;color:var(--muted);">No accounts tracked yet.</li>`;
+      return;
+    }
+    list.innerHTML = accounts.map(a => `
+      <li class="account-item">
+        <span class="account-handle">@${a.username}</span>
+        <button class="btn-remove" onclick="removeAccount('${a.userId}')" title="Remove">x</button>
+      </li>
+    `).join("");
+  }
+
+  async function addAccount() {
+    const input = document.getElementById("usernameInput");
+    const btn = document.getElementById("addAccountBtn");
+    const username = input.value.trim().replace(/^@/, "");
+    if (!username) return;
+
+    btn.disabled = true;
+    btn.textContent = "Resolving...";
+
+    const res = await fetch(`${API}/api/accounts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
+    const data = await res.json();
+
+    btn.disabled = false;
+    btn.textContent = "Track Account";
+
+    if (res.ok) {
+      input.value = "";
+      showToast(`@${username} added`, "success");
+      loadAccounts();
+    } else {
+      showToast(data.error || "Failed to add account", "error");
+    }
+  }
+
+  async function removeAccount(userId) {
+    await fetch(`${API}/api/accounts/${userId}`, { method: "DELETE" });
+    loadAccounts();
+    showToast("Account removed");
+  }
+
+  // ─── Drafts ───────────────────────────────────────────────────────────────
+  async function loadDrafts() {
+    const res = await fetch(`${API}/api/drafts`);
+    const drafts = await res.json();
+    document.getElementById("draftCount").textContent = drafts.length;
+
+    const list = document.getElementById("draftsList");
+    if (drafts.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-title">Queue is clear.</div>
+          <div class="empty-state-sub">New posts will appear here automatically.</div>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = drafts.map(d => `
+      <div class="draft-card" id="card-${d.id}">
+        <div class="draft-post">
+          <div class="draft-post-author">@${d.postAuthor}</div>
+          <div class="draft-post-text">${escapeHtml(d.postText)}</div>
+          ${d.postPermalink ? `<a class="draft-post-link" href="${d.postPermalink}" target="_blank">View original post</a>` : ""}
+        </div>
+
+        <div class="draft-divider"></div>
+
+        <div>
+          <div class="draft-reply-label">Drafted Reply</div>
+          <textarea
+            class="draft-textarea"
+            id="textarea-${d.id}"
+            onchange="saveDraft('${d.id}')"
+          >${escapeHtml(d.draftText)}</textarea>
+        </div>
+
+        <div class="draft-actions">
+          <button class="btn-post" onclick="postReply('${d.id}')">Post Reply</button>
+          <button class="btn-ghost" onclick="redraft('${d.id}')">Redraft</button>
+          <button class="btn-ghost" onclick="dismiss('${d.id}')" style="color:var(--muted)">Dismiss</button>
+          <span class="draft-timestamp">${formatTime(d.createdAt)}</span>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  async function saveDraft(id) {
+    const text = document.getElementById(`textarea-${id}`).value;
+    await fetch(`${API}/api/drafts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ draftText: text }),
+    });
+  }
+
+  async function postReply(id) {
+    const btn = document.querySelector(`#card-${id} .btn-post`);
+    btn.disabled = true;
+    btn.textContent = "Posting...";
+
+    const res = await fetch(`${API}/api/drafts/${id}/post`, { method: "POST" });
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast("Reply posted", "success");
+      document.getElementById(`card-${id}`).remove();
+      loadDrafts();
+    } else {
+      btn.disabled = false;
+      btn.textContent = "Post Reply";
+      showToast(data.error || "Post failed", "error");
+    }
+  }
+
+  async function redraft(id) {
+    const btn = [...document.querySelectorAll(`#card-${id} .btn-ghost`)][0];
+    btn.textContent = "Redrafting...";
+    btn.disabled = true;
+
+    const res = await fetch(`${API}/api/drafts/${id}/redraft`, { method: "POST" });
+    const data = await res.json();
+
+    btn.textContent = "Redraft";
+    btn.disabled = false;
+
+    if (res.ok) {
+      document.getElementById(`textarea-${id}`).value = data.draftText;
+      showToast("New draft ready", "success");
+    } else {
+      showToast("Redraft failed", "error");
+    }
+  }
+
+  async function dismiss(id) {
+    await fetch(`${API}/api/drafts/${id}`, { method: "DELETE" });
+    document.getElementById(`card-${id}`).remove();
+    loadDrafts();
+  }
+
+  async function triggerPoll() {
+    showToast("Polling accounts...");
+    await fetch(`${API}/api/poll`, { method: "POST" });
+    showToast("Poll complete", "success");
+    loadDrafts();
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  function escapeHtml(text = "") {
+    return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function formatTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+      " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+
+  // ─── Init ─────────────────────────────────────────────────────────────────
+  loadAccounts();
+  loadDrafts();
+
+  // Auto-refresh drafts every 2 minutes
+  setInterval(loadDrafts, 120000);
+
+  document.getElementById("usernameInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") addAccount();
+  });
+</script>
+
+</body>
+</html>
